@@ -1,7 +1,7 @@
 ﻿#property link          "https://www.earnforex.com/metatrader-indicators/currency-strength-matrix/"
-#property version       "1.04"
+#property version       "1.05"
 #property strict
-#property copyright     "EarnForex.com - 2019-2023"
+#property copyright     "EarnForex.com - 2019-2024"
 #property description   "This indicator analyses the strength of a currency comparing values in several timeframes."
 #property description   " "
 #property description   "WARNING : You use this software at your own risk."
@@ -356,8 +356,7 @@ void ChangeChartSymbol(string Button)
             break;
         }
     }
-    NewSymbol = _CurrPrefix + Pair + _CurrSuffix;
-    ChartSetSymbolPeriod(ChartID(), NewSymbol, Period());
+    ChartSetSymbolPeriod(ChartID(), Pair, Period());
 }
 
 void GoToMissing(string Pair, int Timeframe)
@@ -548,8 +547,8 @@ string PanelExp = IndicatorName + "-EXP";
 void CreateMiniPanel()
 {
     ObjectCreate(0, PanelBase, OBJ_RECTANGLE_LABEL, 0, 0, 0);
-    ObjectSet(PanelBase, OBJPROP_XDISTANCE, _XOffset);
-    ObjectSet(PanelBase, OBJPROP_YDISTANCE, _YOffset);
+    ObjectSetInteger(0, PanelBase, OBJPROP_XDISTANCE, _XOffset);
+    ObjectSetInteger(0, PanelBase, OBJPROP_YDISTANCE, _YOffset);
     ObjectSetInteger(0, PanelBase, OBJPROP_XSIZE, PanelRecX);
     ObjectSetInteger(0, PanelBase, OBJPROP_YSIZE, PanelMovY + 4);
     ObjectSetInteger(0, PanelBase, OBJPROP_BGCOLOR, clrWhite);
@@ -557,12 +556,12 @@ void CreateMiniPanel()
     ObjectSetInteger(0, PanelBase, OBJPROP_STATE, false);
     ObjectSetInteger(0, PanelBase, OBJPROP_HIDDEN, true);
     ObjectSetInteger(0, PanelBase, OBJPROP_FONTSIZE, int(8 * Scale));
-    ObjectSet(PanelBase, OBJPROP_SELECTABLE, false);
+    ObjectSetInteger(0, PanelBase, OBJPROP_SELECTABLE, false);
     ObjectSetInteger(0, PanelBase, OBJPROP_COLOR, clrBlack);
 
     ObjectCreate(0, PanelExp, OBJ_EDIT, 0, 0, 0);
-    ObjectSet(PanelExp, OBJPROP_XDISTANCE, _XOffset + PanelLabX + 3);
-    ObjectSet(PanelExp, OBJPROP_YDISTANCE, _YOffset + 2);
+    ObjectSetInteger(0, PanelExp, OBJPROP_XDISTANCE, _XOffset + PanelLabX + 3);
+    ObjectSetInteger(0, PanelExp, OBJPROP_YDISTANCE, _YOffset + 2);
     ObjectSetInteger(0, PanelExp, OBJPROP_XSIZE, PanelMovX);
     ObjectSetInteger(0, PanelExp, OBJPROP_YSIZE, PanelMovX);
     ObjectSetInteger(0, PanelExp, OBJPROP_BORDER_TYPE, BORDER_FLAT);
@@ -574,14 +573,14 @@ void CreateMiniPanel()
     ObjectSetInteger(0, PanelExp, OBJPROP_ALIGN, ALIGN_CENTER);
     ObjectSetString(0, PanelExp, OBJPROP_FONT, Font);
     ObjectSetString(0, PanelExp, OBJPROP_TEXT, "#");
-    ObjectSet(PanelExp, OBJPROP_SELECTABLE, false);
+    ObjectSetInteger(0, PanelExp, OBJPROP_SELECTABLE, false);
     ObjectSetInteger(0, PanelExp, OBJPROP_COLOR, clrNavy);
     ObjectSetInteger(0, PanelExp, OBJPROP_BGCOLOR, clrKhaki);
     ObjectSetInteger(0, PanelExp, OBJPROP_BORDER_COLOR, clrBlack);
 
     ObjectCreate(0, PanelLabel, OBJ_EDIT, 0, 0, 0);
-    ObjectSet(PanelLabel, OBJPROP_XDISTANCE, _XOffset + 2);
-    ObjectSet(PanelLabel, OBJPROP_YDISTANCE, _YOffset + 2);
+    ObjectSetInteger(0, PanelLabel, OBJPROP_XDISTANCE, _XOffset + 2);
+    ObjectSetInteger(0, PanelLabel, OBJPROP_YDISTANCE, _YOffset + 2);
     ObjectSetInteger(0, PanelLabel, OBJPROP_XSIZE, PanelLabX);
     ObjectSetInteger(0, PanelLabel, OBJPROP_YSIZE, PanelLabY);
     ObjectSetInteger(0, PanelLabel, OBJPROP_BORDER_TYPE, BORDER_FLAT);
@@ -593,7 +592,7 @@ void CreateMiniPanel()
     ObjectSetString(0, PanelLabel, OBJPROP_TEXT, "STRENGTH MATRIX");
     ObjectSetString(0, PanelLabel, OBJPROP_FONT, Font);
     ObjectSetInteger(0, PanelLabel, OBJPROP_FONTSIZE, int(12 * Scale));
-    ObjectSet(PanelLabel, OBJPROP_SELECTABLE, false);
+    ObjectSetInteger(0, PanelLabel, OBJPROP_SELECTABLE, false);
     ObjectSetInteger(0, PanelLabel, OBJPROP_COLOR, clrNavy);
     ObjectSetInteger(0, PanelLabel, OBJPROP_BGCOLOR, clrKhaki);
     ObjectSetInteger(0, PanelLabel, OBJPROP_BORDER_COLOR, clrBlack);
@@ -601,12 +600,12 @@ void CreateMiniPanel()
 
 void UpdatePanel()
 {
-    ObjectSet(PanelBase, OBJPROP_XDISTANCE, _XOffset);
-    ObjectSet(PanelBase, OBJPROP_YDISTANCE, _YOffset);
-    ObjectSet(PanelExp, OBJPROP_XDISTANCE, _XOffset + PanelLabX + 3);
-    ObjectSet(PanelExp, OBJPROP_YDISTANCE, _YOffset + 2);
-    ObjectSet(PanelLabel, OBJPROP_XDISTANCE, _XOffset + 2);
-    ObjectSet(PanelLabel, OBJPROP_YDISTANCE, _YOffset + 2);
+    ObjectSetInteger(0, PanelBase, OBJPROP_XDISTANCE, _XOffset);
+    ObjectSetInteger(0, PanelBase, OBJPROP_YDISTANCE, _YOffset);
+    ObjectSetInteger(0, PanelExp, OBJPROP_XDISTANCE, _XOffset + PanelLabX + 3);
+    ObjectSetInteger(0, PanelExp, OBJPROP_YDISTANCE, _YOffset + 2);
+    ObjectSetInteger(0, PanelLabel, OBJPROP_XDISTANCE, _XOffset + 2);
+    ObjectSetInteger(0, PanelLabel, OBJPROP_YDISTANCE, _YOffset + 2);
 }
 
 void CleanChart()
@@ -635,6 +634,11 @@ void PopulatePairs()
     if ((StringLen(CurrPrefix) == 0) && (StringLen(CurrSuffix) == 0))
     {
         DetectPrefixSuffix();
+    }
+    else
+    {
+        _CurrPrefix = CurrPrefix;
+        _CurrSuffix = CurrSuffix;
     }
     CurrenciesUsed = 0;
     if (UseEUR) CurrenciesUsed++;
@@ -677,8 +681,8 @@ void DrawMissingHistorical()
     int MissingHistoricalYStart = _YOffset + PanelLabY + MatrixY + 6;
 
     ObjectCreate(0, MissingHistoricalBase, OBJ_RECTANGLE_LABEL, 0, 0, 0);
-    ObjectSet(MissingHistoricalBase, OBJPROP_XDISTANCE, MissingHistoricalXStart);
-    ObjectSet(MissingHistoricalBase, OBJPROP_YDISTANCE, MissingHistoricalYStart + 2);
+    ObjectSetInteger(0, MissingHistoricalBase, OBJPROP_XDISTANCE, MissingHistoricalXStart);
+    ObjectSetInteger(0, MissingHistoricalBase, OBJPROP_YDISTANCE, MissingHistoricalYStart + 2);
     ObjectSetInteger(0, MissingHistoricalBase, OBJPROP_XSIZE, MissingHistoricalRecX);
     ObjectSetInteger(0, MissingHistoricalBase, OBJPROP_YSIZE, (MissingHistoricalLabelY + 2) * 2 + 1);
     ObjectSetInteger(0, MissingHistoricalBase, OBJPROP_BGCOLOR, clrWhite);
@@ -686,12 +690,12 @@ void DrawMissingHistorical()
     ObjectSetInteger(0, MissingHistoricalBase, OBJPROP_STATE, false);
     ObjectSetInteger(0, MissingHistoricalBase, OBJPROP_HIDDEN, true);
     ObjectSetInteger(0, MissingHistoricalBase, OBJPROP_FONTSIZE, int(8 * Scale));
-    ObjectSet(MissingHistoricalBase, OBJPROP_SELECTABLE, false);
+    ObjectSetInteger(0, MissingHistoricalBase, OBJPROP_SELECTABLE, false);
     ObjectSetInteger(0, MissingHistoricalBase, OBJPROP_COLOR, clrBlack);
 
     ObjectCreate(0, MissingHistoricalLabel, OBJ_EDIT, 0, 0, 0);
-    ObjectSet(MissingHistoricalLabel, OBJPROP_XDISTANCE, MissingHistoricalXStart + 2);
-    ObjectSet(MissingHistoricalLabel, OBJPROP_YDISTANCE, MissingHistoricalYStart + 4);
+    ObjectSetInteger(0, MissingHistoricalLabel, OBJPROP_XDISTANCE, MissingHistoricalXStart + 2);
+    ObjectSetInteger(0, MissingHistoricalLabel, OBJPROP_YDISTANCE, MissingHistoricalYStart + 4);
     ObjectSetInteger(0, MissingHistoricalLabel, OBJPROP_XSIZE, MissingHistoricalLabelX);
     ObjectSetInteger(0, MissingHistoricalLabel, OBJPROP_YSIZE, MissingHistoricalLabelY);
     ObjectSetInteger(0, MissingHistoricalLabel, OBJPROP_BORDER_TYPE, BORDER_FLAT);
@@ -703,14 +707,14 @@ void DrawMissingHistorical()
     ObjectSetString(0, MissingHistoricalLabel, OBJPROP_TEXT, "HISTORICAL DATA NEEDED");
     ObjectSetString(0, MissingHistoricalLabel, OBJPROP_FONT, Font);
     ObjectSetInteger(0, MissingHistoricalLabel, OBJPROP_FONTSIZE, int(10 * Scale));
-    ObjectSet(MissingHistoricalLabel, OBJPROP_SELECTABLE, false);
+    ObjectSetInteger(0, MissingHistoricalLabel, OBJPROP_SELECTABLE, false);
     ObjectSetInteger(0, MissingHistoricalLabel, OBJPROP_COLOR, clrWhite);
     ObjectSetInteger(0, MissingHistoricalLabel, OBJPROP_BGCOLOR, clrRed);
     ObjectSetInteger(0, MissingHistoricalLabel, OBJPROP_BORDER_COLOR, clrBlack);
 
     ObjectCreate(0, MissingHistoricalGoTo, OBJ_EDIT, 0, 0, 0);
-    ObjectSet(MissingHistoricalGoTo, OBJPROP_XDISTANCE, MissingHistoricalXStart + 2);
-    ObjectSet(MissingHistoricalGoTo, OBJPROP_YDISTANCE, MissingHistoricalYStart + MissingHistoricalLabelY + 5);
+    ObjectSetInteger(0, MissingHistoricalGoTo, OBJPROP_XDISTANCE, MissingHistoricalXStart + 2);
+    ObjectSetInteger(0, MissingHistoricalGoTo, OBJPROP_YDISTANCE, MissingHistoricalYStart + MissingHistoricalLabelY + 5);
     ObjectSetInteger(0, MissingHistoricalGoTo, OBJPROP_XSIZE, MissingHistoricalLabelX);
     ObjectSetInteger(0, MissingHistoricalGoTo, OBJPROP_YSIZE, MissingHistoricalLabelY);
     ObjectSetInteger(0, MissingHistoricalGoTo, OBJPROP_BORDER_TYPE, BORDER_FLAT);
@@ -722,7 +726,7 @@ void DrawMissingHistorical()
     ObjectSetString(0, MissingHistoricalGoTo, OBJPROP_TEXT, "GO TO - " + MissingHistoricalPair + " - " + PeriodDesc[MissingHistoricalPeriod]);
     ObjectSetString(0, MissingHistoricalGoTo, OBJPROP_FONT, Font);
     ObjectSetInteger(0, MissingHistoricalGoTo, OBJPROP_FONTSIZE, int(10 * Scale));
-    ObjectSet(MissingHistoricalGoTo, OBJPROP_SELECTABLE, false);
+    ObjectSetInteger(0, MissingHistoricalGoTo, OBJPROP_SELECTABLE, false);
     ObjectSetInteger(0, MissingHistoricalGoTo, OBJPROP_COLOR, clrWhite);
     ObjectSetInteger(0, MissingHistoricalGoTo, OBJPROP_BGCOLOR, clrGreen);
     ObjectSetInteger(0, MissingHistoricalGoTo, OBJPROP_BORDER_COLOR, clrBlack);
@@ -739,8 +743,8 @@ void DrawCell(int Row, int Column, string Value, string Tooltip, color Color, co
 {
     string CellName = IndicatorName + "-M-CELL-R" + IntegerToString(Row) + "-C" + IntegerToString(Column);
     ObjectCreate(0, CellName, OBJ_EDIT, 0, 0, 0);
-    ObjectSet(CellName, OBJPROP_XDISTANCE, MatrixXStart + (CellX + 1) * Column + 2);
-    ObjectSet(CellName, OBJPROP_YDISTANCE, MatrixYStart + (CellY + 1) * Row + 2);
+    ObjectSetInteger(0, CellName, OBJPROP_XDISTANCE, MatrixXStart + (CellX + 1) * Column + 2);
+    ObjectSetInteger(0, CellName, OBJPROP_YDISTANCE, MatrixYStart + (CellY + 1) * Row + 2);
     ObjectSetInteger(0, CellName, OBJPROP_XSIZE, CellX);
     ObjectSetInteger(0, CellName, OBJPROP_YSIZE, CellY);
     ObjectSetInteger(0, CellName, OBJPROP_BORDER_TYPE, BORDER_FLAT);
@@ -751,7 +755,7 @@ void DrawCell(int Row, int Column, string Value, string Tooltip, color Color, co
     ObjectSetString(0, CellName, OBJPROP_TOOLTIP, Tooltip);
     ObjectSetInteger(0, CellName, OBJPROP_ALIGN, ALIGN_CENTER);
     ObjectSetString(0, CellName, OBJPROP_FONT, Font);
-    ObjectSet(CellName, OBJPROP_SELECTABLE, false);
+    ObjectSetInteger(0, CellName, OBJPROP_SELECTABLE, false);
     ObjectSetString(0, CellName, OBJPROP_TEXT, Value);
     ObjectSetInteger(0, CellName, OBJPROP_COLOR, ColorText);
     ObjectSetInteger(0, CellName, OBJPROP_BGCOLOR, Color);
@@ -770,8 +774,8 @@ void DrawMatrix()
     SortByStrength();
     string MatrixBase = IndicatorName + "-M-BASE";
     ObjectCreate(0, MatrixBase, OBJ_RECTANGLE_LABEL, 0, 0, 0);
-    ObjectSet(MatrixBase, OBJPROP_XDISTANCE, MatrixXStart);
-    ObjectSet(MatrixBase, OBJPROP_YDISTANCE, MatrixYStart);
+    ObjectSetInteger(0, MatrixBase, OBJPROP_XDISTANCE, MatrixXStart);
+    ObjectSetInteger(0, MatrixBase, OBJPROP_YDISTANCE, MatrixYStart);
     ObjectSetInteger(0, MatrixBase, OBJPROP_XSIZE, CellX);
     ObjectSetInteger(0, MatrixBase, OBJPROP_YSIZE, CellY + 2 * 2);
     ObjectSetInteger(0, MatrixBase, OBJPROP_BGCOLOR, clrWhite);
@@ -779,7 +783,7 @@ void DrawMatrix()
     ObjectSetInteger(0, MatrixBase, OBJPROP_STATE, false);
     ObjectSetInteger(0, MatrixBase, OBJPROP_HIDDEN, true);
     ObjectSetInteger(0, MatrixBase, OBJPROP_FONTSIZE, int(8 * Scale));
-    ObjectSet(MatrixBase, OBJPROP_SELECTABLE, false);
+    ObjectSetInteger(0, MatrixBase, OBJPROP_SELECTABLE, false);
     ObjectSetInteger(0, MatrixBase, OBJPROP_COLOR, clrBlack);
     int r = 0;
     int c = 0;
@@ -961,8 +965,8 @@ void DrawMatrix()
     }
 
     ObjectCreate(0, ActionName, OBJ_EDIT, 0, 0, 0);
-    ObjectSet(ActionName, OBJPROP_XDISTANCE, MatrixXStart + (CellX + 1) * 0 + 2);
-    ObjectSet(ActionName, OBJPROP_YDISTANCE, MatrixYStart + (CellY + 1) * r + 2);
+    ObjectSetInteger(0, ActionName, OBJPROP_XDISTANCE, MatrixXStart + (CellX + 1) * 0 + 2);
+    ObjectSetInteger(0, ActionName, OBJPROP_YDISTANCE, MatrixYStart + (CellY + 1) * r + 2);
     ObjectSetInteger(0, ActionName, OBJPROP_XSIZE, (CellX + 1) * col - 1);
     ObjectSetInteger(0, ActionName, OBJPROP_YSIZE, CellY);
     ObjectSetInteger(0, ActionName, OBJPROP_BORDER_TYPE, BORDER_FLAT);
@@ -973,7 +977,7 @@ void DrawMatrix()
     ObjectSetString(0, ActionName, OBJPROP_TOOLTIP, Tooltip);
     ObjectSetInteger(0, ActionName, OBJPROP_ALIGN, ALIGN_CENTER);
     ObjectSetString(0, ActionName, OBJPROP_FONT, Font);
-    ObjectSet(ActionName, OBJPROP_SELECTABLE, false);
+    ObjectSetInteger(0, ActionName, OBJPROP_SELECTABLE, false);
     ObjectSetString(0, ActionName, OBJPROP_TEXT, Value);
     ObjectSetInteger(0, ActionName, OBJPROP_COLOR, ColorText);
     ObjectSetInteger(0, ActionName, OBJPROP_BGCOLOR, Color);

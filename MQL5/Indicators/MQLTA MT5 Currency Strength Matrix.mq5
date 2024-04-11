@@ -1,7 +1,7 @@
 ﻿#property link          "https://www.earnforex.com/metatrader-indicators/currency-strength-matrix/"
-#property version       "1.04"
+#property version       "1.05"
 #property strict
-#property copyright     "EarnForex.com - 2019-2023"
+#property copyright     "EarnForex.com - 2019-2024"
 #property description   "This indicator analyses the strength of a currency comparing values in several timeframes."
 #property description   " "
 #property description   "WARNING : You use this software at your own risk."
@@ -392,8 +392,7 @@ void ChangeChartSymbol(string Button)
             break;
         }
     }
-    NewSymbol = _CurrPrefix + Pair + _CurrSuffix;
-    ChartSetSymbolPeriod(0, NewSymbol, Period());
+    ChartSetSymbolPeriod(0, Pair, Period());
 }
 
 void GoToMissing(string Pair, int Timeframe)
@@ -659,6 +658,11 @@ void PopulatePairs()
     if ((StringLen(CurrPrefix) == 0) && (StringLen(CurrSuffix) == 0))
     {
         DetectPrefixSuffix();
+    }
+    else
+    {
+      _CurrPrefix = CurrPrefix;
+      _CurrSuffix = CurrSuffix;
     }
     CurrenciesUsed = 0;
     if (UseEUR) CurrenciesUsed++;
