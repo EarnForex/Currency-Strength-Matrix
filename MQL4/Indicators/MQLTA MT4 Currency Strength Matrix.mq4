@@ -1,41 +1,44 @@
 ﻿#property link          "https://www.earnforex.com/metatrader-indicators/currency-strength-matrix/"
-#property version       "1.05"
+#property version       "1.06"
 #property strict
-#property copyright     "EarnForex.com - 2019-2024"
+#property copyright     "EarnForex.com - 2019-2025"
 #property description   "This indicator analyses the strength of a currency comparing values in several timeframes."
-#property description   " "
-#property description   "WARNING : You use this software at your own risk."
-#property description   "The creator of these plugins cannot be held responsible for damage or loss."
-#property description   " "
+#property description   ""
+#property description   "WARNING: Use this software at your own risk."
+#property description   "The creator of these plugins cannot be held responsible for any damage or loss."
+#property description   ""
 #property description   "Find More on www.EarnForex.com"
 #property icon          "\\Files\\EF-Icon-64x64px.ico"
 
 #property indicator_chart_window
-#property indicator_buffers 0
+
+struct SBuffer
+{
+   double OutputBuffer[];
+};
+
+SBuffer vBuffers[8][9]; // Values
+SBuffer aBuffers[8][9]; // Acceleration
 
 enum Enum_CalculationMode
 {
-    Mode_CloseClose = 2,                // CLOSE DIFFERENCE
-    Mode_MA = 3,                        // MA DIFFERENCE
-};
-
-enum ENUM_CORNER
-{
-    TopLeft = CORNER_LEFT_UPPER,        // TOP LEFT
-    TopRight = CORNER_RIGHT_UPPER,      // TOP RIGHT
-    BottomLeft = CORNER_LEFT_LOWER,     // BOTTOM LEFT
-    BottomRight = CORNER_RIGHT_LOWER,   // BOTTOM RIGHT
+    Mode_CloseClose,                // Close difference
+    Mode_MA,                        // MA difference
+    Mode_RSI,                       // RSI difference
+    Mode_RSIMA,                     // RSI MA
+    Mode_StochMain,                 // Stochastic main
+    Mode_StochSignal                // Stochastic signal
 };
 
 enum ENUM_SHOWTYPE
 {
-    SHOW_VALUES = 1,                    // SHOW VALUES
-    SHOW_COLORS = 2,                    // SHOW COLORS
+    SHOW_VALUES,                    // Show values
+    SHOW_COLORS,                    // Show colors
 };
 
 enum ENUM_SORTBY
 {
-    CURRENT = PERIOD_CURRENT,           // CURRENT PERIOD
+    CURRENT = PERIOD_CURRENT,           // Current period
     M1 = PERIOD_M1,                     // M1
     M5 = PERIOD_M5,                     // M5
     M15 = PERIOD_M15,                   // M15
@@ -50,28 +53,33 @@ enum ENUM_SORTBY
 input string comment_0 = "==========";    // CSM Indicator
 input string IndicatorName = "MQLTA-CSM"; // Indicator's Name
 
-input string comment_2 = "==========";                        // Calculation Options
+input string comment_2 = "==========";                        // Calculation
 input Enum_CalculationMode CalculationMode = Mode_CloseClose; // Calculation Mode
 input int BarsDifference = 1;                                 // Bars Of Difference Between Calculation Values
 input int MAPeriod = 2;                                       // MA Period (If Using MA Mode Higher Number Is Less Sensitive)
 input ENUM_MA_METHOD MAMethod = MODE_EMA;                     // MA Method
+input int RSIPeriod = 14;                                     // RSI Period (for RSI mode)
+input int Stochastic_K_Period = 5;   // Stochastic %K Period
+input int Stochastic_D_Period = 3;   // Stochastic %D Period
+input int Stochastic_Slowing = 3;    // Stochastic Slowing
+input bool UseOutputBuffers = false; // Use Output Buffers
 
 input string comment_4 = "==========";      // Matrix Values and Sorting
-input ENUM_SHOWTYPE ShowType = SHOW_COLORS; // Show Values or just Colors
+input ENUM_SHOWTYPE ShowType = SHOW_COLORS; // Show Values or Just Colors
 input ENUM_SORTBY SortByPeriod = CURRENT;   // Sort Strength By
-input bool ShowAcceleration = false;        // Show The Acceleration Color
+input bool ShowAcceleration = false;        // Show the Acceleration Color
 input int MinimumRefreshInterval = 5;       // Minimum Refresh Interval (Seconds)
 
-input string comment_4b = "===================="; // Autofocus Option - If Enabled it Will Disable Notifications
-input bool AutoFocus = false;                     // Change Chart to Ideal Pair Automatically
-input string comment_5 = "====================";  // Notification Options
-input bool EnableNotify = false;                  // Enable Notifications feature
-input bool SendAlert = true;                      // Send Alert Notification
-input bool SendApp = false;                       // Send Notification to Mobile
-input bool SendEmail = false;                     // Send Notification via Email
-input string comment_3 = "====================";  // Notify Only If
-input bool NotifyOnlyCurrentPair = false;         // Ideal Opportunity is for the Current Chart
-input bool NotifyOnlyFirstAndLast = false;        // Ideal Opportunity is with First and Last Currency
+input string comment_4b = "==========";    // Autofocus - If Enabled It Will Disable Notifications
+input bool AutoFocus = false;              // Change Chart to Ideal Pair Automatically
+input string comment_5 = "==========";     // Notification
+input bool EnableNotify = false;           // Enable Notifications feature
+input bool SendAlert = true;               // Send Alert Notification
+input bool SendApp = false;                // Send Notification to Mobile
+input bool SendEmail = false;              // Send Notification via Email
+input string comment_3 = "==========";     // Notify Only If
+input bool NotifyOnlyCurrentPair = false;  // Ideal Opportunity is for the Current Chart
+input bool NotifyOnlyFirstAndLast = false; // Ideal Opportunity is with First and Last Currency
 
 input string comment_1 = "=========="; // Currencies to consider
 input bool UseEUR = true;              // EUR
@@ -79,7 +87,7 @@ input bool UseUSD = true;              // USD
 input bool UseGBP = true;              // GBP
 input bool UseJPY = true;              // JPY
 input bool UseAUD = true;              // AUD
-input bool UseNZD = true;              // N ZD
+input bool UseNZD = true;              // NZD
 input bool UseCAD = true;              // CAD
 input bool UseCHF = true;              // CHF
 
@@ -98,10 +106,10 @@ input string comment_7 = "=========="; // Pairs Prefix and Suffix
 input string CurrPrefix = "";          // Pairs Prefix
 input string CurrSuffix = "";          // Pairs Suffix
 
-input string comment_1b = "=========="; // Panel Starting Position
-input int XOffset = 20;                 // Horizontal offset (pixels)
-input int YOffset = 20;                 // Vertical offset (pixels)
-input double Scale = 1.0;               // Scale for the panel's size
+input string comment_1b = "=========="; // Miscellaneous
+input int XOffset = 20;                 // Horizontal Offset (pixels)
+input int YOffset = 20;                 // Vertical Offset (pixels)
+input double Scale = 1.0;               // Scale for the Panel's Size
 
 string Font = "Consolas";
 double PreChecks = false;
@@ -189,6 +197,7 @@ bool PeriodEnabled[9] = {true, true, true, true, true, true, true, true, true};
 
 bool HistoricalOK = true;
 bool MissingHistoricalNotified = false;
+bool Initialized = false;
 string MissingHistoricalPair = "";
 int MissingHistoricalPeriod = 0;
 
@@ -201,8 +210,12 @@ double DPIScale; // Scaling parameter for the panel based on the screen DPI.
 string CalculationModeDesc()
 {
     string Text = "";
-    if (CalculationMode == Mode_CloseClose) Text = "CLOSE DIFFERENCE";
-    if (CalculationMode == Mode_MA) Text = "MA DIFFERENCE";
+    if (CalculationMode == Mode_CloseClose) Text = "Close difference";
+    else if (CalculationMode == Mode_MA) Text = "MA difference";
+    else if (CalculationMode == Mode_RSI) Text = "RSI difference";
+    else if (CalculationMode == Mode_RSIMA) Text = "RSI MA";
+    else if (CalculationMode == Mode_StochMain) Text = "Stochastic main";
+    else if (CalculationMode == Mode_StochSignal) Text = "Stochastic signal";
     return Text;
 }
 
@@ -222,6 +235,32 @@ int OnInit()
     PanelRecX = PanelMovX * 1 + PanelLabX + 5;
     MissingHistoricalLabelX = (int)MathRound(187 * DPIScale);
     MissingHistoricalLabelY = (int)MathRound(26 * DPIScale);
+    
+    if (UseOutputBuffers)
+    {
+        int n = 72;
+        if (ShowAcceleration) n = 144;
+        IndicatorBuffers(n);
+        // Values
+        for (int i = 0; i < 8; i++) // Currencies
+        {
+            for (int j = 0; j < 9; j++) // Timeframes
+            {
+                SetIndexBuffer(i * 9 + j, vBuffers[i][j].OutputBuffer);
+            }
+        }
+        // Acceleration
+        if (ShowAcceleration)
+        {
+            for (int i = 0; i < 8; i++) // Currencies
+            {
+                for (int j = 0; j < 9; j++) // Timeframes
+                {
+                    SetIndexBuffer(72 + i * 9 + j, aBuffers[i][j].OutputBuffer);
+                }
+            }
+        }
+    }
 
     CleanChart();
     PopulatePairs();
@@ -232,6 +271,7 @@ int OnInit()
     DrawMatrix();
 
     EventSetTimer(MinimumRefreshInterval);
+    Initialized = true;
     return INIT_SUCCEEDED;
 }
 
@@ -303,7 +343,8 @@ void OnChartEvent(const int id,
         }
         if (sparam == PanelExp)
         {
-            DrawMatrix();
+            if (MatrixOpen) RemoveMatrix();
+            else DrawMatrix();
         }
         if (sparam == MissingHistoricalGoTo)
         {
@@ -420,7 +461,7 @@ double PopulateMatrixCell(int CurrencyIndex, string Currency, int PeriodIndex)
                 EndValuePrev = iMA(AllPairs[j], PeriodIndexes[PeriodIndex], MAPeriod, 0, MAMethod, PRICE_CLOSE, 1);
             }
         }
-        if (CalculationMode == Mode_CloseClose)
+        else if (CalculationMode == Mode_CloseClose)
         {
             StartValue = iClose(AllPairs[j], PeriodIndexes[PeriodIndex], BarsDifference);
             EndValue = iClose(AllPairs[j], PeriodIndexes[PeriodIndex], 0);
@@ -428,6 +469,52 @@ double PopulateMatrixCell(int CurrencyIndex, string Currency, int PeriodIndex)
             {
                 StartValuePrev = iClose(AllPairs[j], PeriodIndexes[PeriodIndex], BarsDifference + 1);
                 EndValuePrev = iClose(AllPairs[j], PeriodIndexes[PeriodIndex], 1);
+            }
+        }
+        else if (CalculationMode == Mode_RSI)
+        {
+            StartValue = iRSI(AllPairs[j], PeriodIndexes[PeriodIndex], RSIPeriod, PRICE_CLOSE, BarsDifference);
+            EndValue = iRSI(AllPairs[j], PeriodIndexes[PeriodIndex], RSIPeriod, PRICE_CLOSE, 0);
+            if (ShowAcceleration)
+            {
+                StartValuePrev = iRSI(AllPairs[j], PeriodIndexes[PeriodIndex], RSIPeriod, PRICE_CLOSE, BarsDifference + 1);
+                EndValuePrev = iRSI(AllPairs[j], PeriodIndexes[PeriodIndex], RSIPeriod, PRICE_CLOSE, 1);
+            }
+        }
+        else if (CalculationMode == Mode_RSIMA)
+        {
+            double RSITemp[];
+            ArrayResize(RSITemp, MAPeriod + BarsDifference + 1);
+            for (int i = 0; i < MAPeriod + BarsDifference + 1; i++)
+            {
+                RSITemp[i] = iRSI(AllPairs[j], PeriodIndexes[PeriodIndex], RSIPeriod, PRICE_CLOSE, i);
+            }            
+            StartValue = iMAOnArray(RSITemp, 0, MAPeriod, 0, MAMethod, BarsDifference);
+            EndValue = iMAOnArray(RSITemp, 0, MAPeriod, 0, MAMethod, 0);
+            if (ShowAcceleration)
+            {
+                StartValuePrev = iMAOnArray(RSITemp, 0, MAPeriod, 0, MAMethod, BarsDifference + 1);
+                EndValuePrev = iMAOnArray(RSITemp, 0, MAPeriod, 0, MAMethod, 1);
+            }
+        }
+        else if (CalculationMode == Mode_StochMain)
+        {
+            StartValue = iStochastic(AllPairs[j], PeriodIndexes[PeriodIndex], Stochastic_K_Period, Stochastic_D_Period, Stochastic_Slowing, MAMethod, STO_CLOSECLOSE, 0, BarsDifference);
+            EndValue = iStochastic(AllPairs[j], PeriodIndexes[PeriodIndex], Stochastic_K_Period, Stochastic_D_Period, Stochastic_Slowing, MAMethod, STO_CLOSECLOSE, 0, 0);
+            if (ShowAcceleration)
+            {
+                StartValuePrev = iStochastic(AllPairs[j], PeriodIndexes[PeriodIndex], Stochastic_K_Period, Stochastic_D_Period, Stochastic_Slowing, MAMethod, STO_CLOSECLOSE, 0, BarsDifference + 1);
+                EndValuePrev = iStochastic(AllPairs[j], PeriodIndexes[PeriodIndex], Stochastic_K_Period, Stochastic_D_Period, Stochastic_Slowing, MAMethod, STO_CLOSECLOSE, 0, 1);
+            }
+        }
+        else if (CalculationMode == Mode_StochSignal)
+        {
+            StartValue = iStochastic(AllPairs[j], PeriodIndexes[PeriodIndex], Stochastic_K_Period, Stochastic_D_Period, Stochastic_Slowing, MAMethod, STO_CLOSECLOSE, 1, BarsDifference);
+            EndValue = iStochastic(AllPairs[j], PeriodIndexes[PeriodIndex], Stochastic_K_Period, Stochastic_D_Period, Stochastic_Slowing, MAMethod, STO_CLOSECLOSE, 1, 0);
+            if (ShowAcceleration)
+            {
+                StartValuePrev = iStochastic(AllPairs[j], PeriodIndexes[PeriodIndex], Stochastic_K_Period, Stochastic_D_Period, Stochastic_Slowing, MAMethod, STO_CLOSECLOSE, 1, BarsDifference + 1);
+                EndValuePrev = iStochastic(AllPairs[j], PeriodIndexes[PeriodIndex], Stochastic_K_Period, Stochastic_D_Period, Stochastic_Slowing, MAMethod, STO_CLOSECLOSE, 1, 1);
             }
         }
         DiffValue = EndValue - StartValue;
@@ -450,6 +537,11 @@ double PopulateMatrixCell(int CurrencyIndex, string Currency, int PeriodIndex)
     }
     StrengthMatrixCurr[CurrencyIndex][PeriodIndex] = NormalizeDouble(Total, 4);
     StrengthMatrixPrev[CurrencyIndex][PeriodIndex] = NormalizeDouble(TotalPrev, 4);
+    if ((UseOutputBuffers) && (Initialized))
+    {
+        vBuffers[CurrencyIndex][PeriodIndex].OutputBuffer[0] = StrengthMatrixCurr[CurrencyIndex][PeriodIndex];
+        if (ShowAcceleration) aBuffers[CurrencyIndex][PeriodIndex].OutputBuffer[0] = StrengthMatrixPrev[CurrencyIndex][PeriodIndex];
+    }
     return Total;
 }
 

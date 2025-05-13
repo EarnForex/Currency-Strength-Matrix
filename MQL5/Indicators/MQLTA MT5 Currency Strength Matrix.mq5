@@ -1,43 +1,49 @@
 ﻿#property link          "https://www.earnforex.com/metatrader-indicators/currency-strength-matrix/"
-#property version       "1.05"
+#property version       "1.06"
 #property strict
-#property copyright     "EarnForex.com - 2019-2024"
+#property copyright     "EarnForex.com - 2019-2025"
 #property description   "This indicator analyses the strength of a currency comparing values in several timeframes."
-#property description   " "
-#property description   "WARNING : You use this software at your own risk."
-#property description   "The creator of these plugins cannot be held responsible for damage or loss."
-#property description   " "
+#property description   ""
+#property description   "WARNING: Use this software at your own risk."
+#property description   "The creator of these plugins cannot be held responsible for any damage or loss."
+#property description   ""
 #property description   "Find More on www.EarnForex.com"
 #property icon          "\\Files\\EF-Icon-64x64px.ico"
 
+#include <MQLTA ErrorHandling.mqh>
 #include <MQLTA Utils.mqh>
 
 #property indicator_chart_window
-#property indicator_buffers 0
-#property indicator_plots 0
+#property indicator_buffers 144
+#property indicator_plots 144
+
+struct SBuffer
+{
+   double OutputBuffer[];
+};
+
+SBuffer vBuffers[8][9]; // Values
+SBuffer aBuffers[8][9]; // Acceleration
 
 enum Enum_CalculationMode
 {
-    Mode_CloseClose = 2,                // CLOSE DIFFERENCE
-};
-
-enum ENUM_CORNER
-{
-    TopLeft = CORNER_LEFT_UPPER,        // TOP LEFT
-    TopRight = CORNER_RIGHT_UPPER,      // TOP RIGHT
-    BottomLeft = CORNER_LEFT_LOWER,     // BOTTOM LEFT
-    BottomRight = CORNER_RIGHT_LOWER,   // BOTTOM RIGHT
+    Mode_CloseClose,               // Close difference
+    Mode_MA,                       // MA difference
+    Mode_RSI,                      // RSI difference
+    Mode_RSIMA,                    // RSI MA
+    Mode_StochMain,                // Stochastic main
+    Mode_StochSignal               // Stochastic signal
 };
 
 enum ENUM_SHOWTYPE
 {
-    SHOW_VALUES = 1,                    // SHOW VALUES
-    SHOW_COLORS = 2,                    // SHOW COLORS
+    SHOW_VALUES,                    // Show values
+    SHOW_COLORS,                    // Show colors
 };
 
 enum ENUM_SORTBY
 {
-    CURRENT = PERIOD_CURRENT,           // CURRENT PERIOD
+    CURRENT = PERIOD_CURRENT,           // Current period
     M1 = PERIOD_M1,                     // M1
     M5 = PERIOD_M5,                     // M5
     M15 = PERIOD_M15,                   // M15
@@ -52,28 +58,34 @@ enum ENUM_SORTBY
 input string comment_0 = "==========";    // CSM Indicator
 input string IndicatorName = "MQLTA-CSM"; // Indicator's Name
 
-
-input string comment_2 = "==========";                  // Calculation Options
-Enum_CalculationMode CalculationMode = Mode_CloseClose; // Calculation Mode
+input string comment_2 = "==========";                  // Calculation
+input Enum_CalculationMode CalculationMode = Mode_CloseClose; // Calculation Mode
 input int BarsDifference = 1;                           // Bars Of Difference Between Calculation Values
+input int MAPeriod = 2;                                 // MA Period (If Using MA Mode Higher Number Is Less Sensitive)
+input ENUM_MA_METHOD MAMethod = MODE_EMA;               // MA Method
+input int RSIPeriod = 14;                               // RSI Period (for RSI mode)
+input int Stochastic_K_Period = 5;   // Stochastic %K Period
+input int Stochastic_D_Period = 3;   // Stochastic %D Period
+input int Stochastic_Slowing = 3;    // Stochastic Slowing
+input bool UseOutputBuffers = false; // Use Output Buffers
 
 input string comment_4 = "==========";      // Matrix Values and Sorting
 input ENUM_SHOWTYPE ShowType = SHOW_COLORS; // Show Values or just Colors
 input ENUM_SORTBY SortByPeriod = CURRENT;   // Sort Strength By
-input bool ShowAcceleration = false;        // Show The Acceleration Color
+input bool ShowAcceleration = false;        // Show the Acceleration Color
 input int MinimumRefreshInterval = 5;       // Minimum Refresh Interval (Seconds)
 
-input string comment_4b = "===================="; //Autofocus Option - If Enabled it Will Disable Notifications
-input bool AutoFocus = false;                     // Change Chart to Ideal Pair Automatically
-input string comment_5 = "===================="; // Notification Options
-input bool EnableNotify = false;                 // Enable Notifications feature
-input bool SendAlert = true;                     // Send Alert Notification
-input bool SendApp = false;                      // Send Notification to Mobile
-input bool SendEmail = false;                    // Send Notification via Email
-input int WaitTimeNotify = 10;                   // Wait time between notifications (Minutes)
-input string comment_3 = "===================="; // Notify Only If
-input bool NotifyOnlyCurrentPair = false;        // Ideal Opportunity is for the Current Chart
-input bool NotifyOnlyFirstAndLast = false;       // Ideal Opportunity is with First and Last Currency
+input string comment_4b = "==========";    // Autofocus - If Enabled it Will Disable Notifications
+input bool AutoFocus = false;              // Change Chart to Ideal Pair Automatically
+input string comment_5 = "==========";     // Notifications
+input bool EnableNotify = false;           // Enable Notifications feature
+input bool SendAlert = true;               // Send Alert Notification
+input bool SendApp = false;                // Send Notification to Mobile
+input bool SendEmail = false;              // Send Notification via Email
+input int WaitTimeNotify = 10;             // Wait time between notifications (Minutes)
+input string comment_3 = "==========";     // Notify Only If
+input bool NotifyOnlyCurrentPair = false;  // Ideal Opportunity is for the Current Chart
+input bool NotifyOnlyFirstAndLast = false; // Ideal Opportunity is with First and Last Currency
 
 input string comment_1 = "=========="; // Currencies to consider
 input bool UseEUR = true;              // EUR
@@ -100,10 +112,10 @@ input string comment_7 = "=========="; // Pairs Prefix and Suffix
 input string CurrPrefix = "";          // Pairs Prefix
 input string CurrSuffix = "";          // Pairs Suffix
 
-input string comment_1b = "=========="; // Panel Starting Position
-input int XOffset = 20;              // Horizontal offset (pixels)
-input int YOffset = 20;              // Vertical offset (pixels)
-input double Scale = 1.0;               // Scale for the panel's size
+input string comment_1b = "=========="; // Miscellaneous
+input int XOffset = 20;                 // Horizontal Offset (pixels)
+input int YOffset = 20;                 // Vertical Offset (pixels)
+input double Scale = 1.0;               // Scale for the Panel's Size
 
 string Font = "Consolas";
 double PreChecks = false;
@@ -222,8 +234,17 @@ bool PeriodEnabled[9] =
     true
 };
 
+// For indicator values:
+int MAHandle[28][9]; // 28 pairs and 9 periods max.
+double MAValue[][28][9];
+int RSIHandle[28][9];
+double RSIValue[][28][9];
+int StochHandle[28][9];
+double StochValue[][28][9];
+
 bool HistoricalOK = true;
 bool MissingHistoricalNotified = false;
+bool Initialized = false;
 string MissingHistoricalPair = "";
 int MissingHistoricalPeriod = 0;
 
@@ -236,7 +257,8 @@ double DPIScale; // Scaling parameter for the panel based on the screen DPI.
 string CalculationModeDesc()
 {
     string Text = "";
-    if (CalculationMode == Mode_CloseClose) Text = "CLOSE DIFFERENCE";
+    if (CalculationMode == Mode_CloseClose) Text = "Close difference";
+    else if (CalculationMode == Mode_MA) Text = "MA difference";
     return Text;
 }
 
@@ -249,6 +271,23 @@ int OnInit(void)
     _XOffset = XOffset;
     _YOffset = YOffset;
 
+    if (CalculationMode == Mode_MA)
+    {
+        if (!GetMAHandle()) return INIT_FAILED;
+    }
+    else if ((CalculationMode == Mode_RSI) || (CalculationMode == Mode_RSIMA))
+    {
+        if (!GetRSIHandle()) return INIT_FAILED;
+        if (CalculationMode == Mode_RSIMA)
+        {
+            if (!GetMAHandle()) return INIT_FAILED; // RSI MA is calculated using iMA().
+        }
+    }
+    else if ((CalculationMode == Mode_StochMain) || (CalculationMode == Mode_StochSignal))
+    {
+        if (!GetStochHandle()) return INIT_FAILED;
+    }
+    
     DPIScale = Scale * (double)TerminalInfoInteger(TERMINAL_SCREEN_DPI) / 96.0;
     PanelMovX = (int)MathRound(26 * DPIScale);
     PanelMovY = (int)MathRound(26 * DPIScale);
@@ -258,16 +297,44 @@ int OnInit(void)
     MissingHistoricalLabelX = (int)MathRound(187 * DPIScale);
     MissingHistoricalLabelY = (int)MathRound(26 * DPIScale);
 
+    if (UseOutputBuffers)
+    {
+        // Values
+        for (int i = 0; i < 8; i++) // Currencies
+        {
+            for (int j = 0; j < 9; j++) // Timeframes
+            {
+                SetIndexBuffer(i * 9 + j, vBuffers[i][j].OutputBuffer, INDICATOR_DATA);
+                PlotIndexSetString(i * 9 + j, PLOT_LABEL, CurrencyDesc[i] + " @ " + PeriodDesc[j]);
+                ArraySetAsSeries(vBuffers[i][j].OutputBuffer, true);
+            }
+        }
+        // Acceleration
+        if (ShowAcceleration)
+        {
+            for (int i = 0; i < 8; i++) // Currencies
+            {
+                for (int j = 0; j < 9; j++) // Timeframes
+                {
+                    SetIndexBuffer(72 + i * 9 + j, aBuffers[i][j].OutputBuffer, INDICATOR_DATA);
+                    PlotIndexSetString(72 + i * 9 + j, PLOT_LABEL, "Acc" + CurrencyDesc[i] + " @ " + PeriodDesc[j]);
+                    ArraySetAsSeries(vBuffers[i][j].OutputBuffer, true);
+                }
+            }
+        }
+    }
+
     CleanChart();
     PopulatePairs();
     CheckAllPairs();
     InitializeVariables();
     CheckSorting();
-    PopulateMatrix();
+    if (CalculationMode == Mode_CloseClose) PopulateMatrix();
     DrawMatrix();
     int timeframe = ChartPeriod(0);
 
     EventSetTimer(MinimumRefreshInterval);
+    Initialized = true;
     return INIT_SUCCEEDED;
 }
 
@@ -281,6 +348,32 @@ void OnTimer()
 {
     CreateMiniPanel();
     HistoricalOK = true;
+
+    if (CalculationMode == Mode_MA)
+    {
+        int ma_limit = BarsDifference + 1; // Current bar + BarsDifference.
+        if (ShowAcceleration) ma_limit++; // Another bar to calculate acceleration.
+        if (!GetMAValue(ma_limit)) HistoricalOK = false;
+    }
+    else if ((CalculationMode == Mode_RSI) || (CalculationMode == Mode_RSIMA))
+    {
+        int rsi_limit = BarsDifference + 1; // Current bar + BarsDifference.
+        if (ShowAcceleration) rsi_limit++; // Another bar to calculate acceleration.
+        if (!GetRSIValue(rsi_limit)) HistoricalOK = false;
+        if (CalculationMode == Mode_RSIMA) // RSI MA is calculated using iMA().
+        {
+            int ma_limit = BarsDifference + 1; // Current bar + BarsDifference.
+            if (ShowAcceleration) ma_limit++; // Another bar to calculate acceleration.
+            if (!GetMAValue(ma_limit)) HistoricalOK = false;
+        }
+    }
+    else if ((CalculationMode == Mode_StochMain) || (CalculationMode == Mode_StochSignal))
+    {
+        int stoch_limit = BarsDifference + 1; // Current bar + BarsDifference.
+        if (ShowAcceleration) stoch_limit++; // Another bar to calculate acceleration.
+        if (!GetStochValue(stoch_limit)) HistoricalOK = false;
+    }
+
     PopulateMatrix();
     if (MatrixOpen) DrawMatrix();
     if ((!HistoricalOK) && (MatrixOpen))
@@ -306,6 +399,32 @@ int OnCalculate (const int rates_total,
 {
     CreateMiniPanel();
     HistoricalOK = true;
+
+    if (CalculationMode == Mode_MA)
+    {
+        int ma_limit = BarsDifference + 1; // Current bar + BarsDifference.
+        if (ShowAcceleration) ma_limit++; // Another bar to calculate acceleration.
+        if (!GetMAValue(ma_limit)) HistoricalOK = false;
+    }
+    else if ((CalculationMode == Mode_RSI) || (CalculationMode == Mode_RSIMA))
+    {
+        int rsi_limit = BarsDifference + 1; // Current bar + BarsDifference.
+        if (ShowAcceleration) rsi_limit++; // Another bar to calculate acceleration.
+        if (!GetRSIValue(rsi_limit)) HistoricalOK = false;
+        if (CalculationMode == Mode_RSIMA) // RSI MA is calculated using iMA().
+        {
+            int ma_limit = BarsDifference + 1; // Current bar + BarsDifference.
+            if (ShowAcceleration) ma_limit++; // Another bar to calculate acceleration.
+            if (!GetMAValue(ma_limit)) HistoricalOK = false;
+        }
+    }
+    else if ((CalculationMode == Mode_StochMain) || (CalculationMode == Mode_StochSignal))
+    {
+        int stoch_limit = BarsDifference + 1; // Current bar + BarsDifference.
+        if (ShowAcceleration) stoch_limit++; // Another bar to calculate acceleration.
+        if (!GetStochValue(stoch_limit)) HistoricalOK = false;
+    }
+
     PopulateMatrix();
     if (MatrixOpen) DrawMatrix();
     if (!HistoricalOK && MatrixOpen)
@@ -339,7 +458,8 @@ void OnChartEvent(const int id,
         }
         if (sparam == PanelExp)
         {
-            DrawMatrix();
+            if (MatrixOpen) RemoveMatrix();
+            else DrawMatrix();
         }
         if (sparam == MissingHistoricalGoTo)
         {
@@ -446,13 +566,47 @@ double PopulateMatrixCell(int CurrencyIndex, string Currency, int PeriodIndex)
         double StartValuePrev = 0;
         double EndValuePrev = 0;
         double DiffValuePrev = 0;
-        StartValue = iClose(AllPairs[j], PeriodIndexes[PeriodIndex], BarsDifference);
-        EndValue = iClose(AllPairs[j], PeriodIndexes[PeriodIndex], 0);
-        if (ShowAcceleration)
+        if ((CalculationMode == Mode_MA) || (CalculationMode == Mode_RSIMA)) // In RSI MA, the MA buffer already contains MA over RSI.
         {
-            StartValuePrev = iClose(AllPairs[j], PeriodIndexes[PeriodIndex], BarsDifference + 1);
-            EndValuePrev = iClose(AllPairs[j], PeriodIndexes[PeriodIndex], 1);
+            StartValue = MAValue[BarsDifference][j][PeriodIndex];
+            EndValue = MAValue[0][j][PeriodIndex];
+            if (ShowAcceleration)
+            {
+                StartValuePrev = MAValue[BarsDifference + 1][j][PeriodIndex];
+                EndValuePrev = MAValue[1][j][PeriodIndex];
+            }
         }
+        else if (CalculationMode == Mode_CloseClose)
+        {
+            StartValue = iClose(AllPairs[j], PeriodIndexes[PeriodIndex], BarsDifference);
+            EndValue = iClose(AllPairs[j], PeriodIndexes[PeriodIndex], 0);
+            if (ShowAcceleration)
+            {
+                StartValuePrev = iClose(AllPairs[j], PeriodIndexes[PeriodIndex], BarsDifference + 1);
+                EndValuePrev = iClose(AllPairs[j], PeriodIndexes[PeriodIndex], 1);
+            }
+        }
+        else if (CalculationMode == Mode_RSI)
+        {
+            StartValue = RSIValue[BarsDifference][j][PeriodIndex];
+            EndValue = RSIValue[0][j][PeriodIndex];
+            if (ShowAcceleration)
+            {
+                StartValuePrev = RSIValue[BarsDifference + 1][j][PeriodIndex];
+                EndValuePrev = RSIValue[1][j][PeriodIndex];
+            }
+        }
+        else if ((CalculationMode == Mode_StochMain) || (CalculationMode == Mode_StochSignal))
+        {
+            StartValue = StochValue[BarsDifference][j][PeriodIndex];
+            EndValue = StochValue[0][j][PeriodIndex];
+            if (ShowAcceleration)
+            {
+                StartValuePrev = StochValue[BarsDifference + 1][j][PeriodIndex];
+                EndValuePrev = StochValue[1][j][PeriodIndex];
+            }
+        }
+
         DiffValue = EndValue - StartValue;
         DiffValuePrev = EndValuePrev - StartValuePrev;
         if ((EndValue == 0) || (StartValue == 0) || (((EndValuePrev == 0) || (StartValuePrev == 0)) && (ShowAcceleration)))
@@ -473,6 +627,11 @@ double PopulateMatrixCell(int CurrencyIndex, string Currency, int PeriodIndex)
     }
     StrengthMatrixCurr[CurrencyIndex][PeriodIndex] = NormalizeDouble(Total, 4);
     StrengthMatrixPrev[CurrencyIndex][PeriodIndex] = NormalizeDouble(TotalPrev, 4);
+    if ((UseOutputBuffers) && (Initialized))
+    {
+        vBuffers[CurrencyIndex][PeriodIndex].OutputBuffer[0] = StrengthMatrixCurr[CurrencyIndex][PeriodIndex];
+        if (ShowAcceleration) aBuffers[CurrencyIndex][PeriodIndex].OutputBuffer[0] = StrengthMatrixPrev[CurrencyIndex][PeriodIndex];
+    }
     return Total;
 }
 
@@ -629,13 +788,14 @@ void UpdatePanel()
     ObjectSetInteger(0, PanelExp, OBJPROP_YDISTANCE, _YOffset + 2);
     ObjectSetInteger(0, PanelLabel, OBJPROP_XDISTANCE, _XOffset + 2);
     ObjectSetInteger(0, PanelLabel, OBJPROP_YDISTANCE, _YOffset + 2);
+    ChartRedraw();
 }
 
 void CleanChart()
 {
     ObjectsDeleteAll(ChartID(), IndicatorName);
+    ChartRedraw();
 }
-
 
 void DetectPrefixSuffix()
 {
@@ -785,7 +945,6 @@ void DrawCell(int Row, int Column, string Value, string Tooltip, color Color, co
     ObjectSetInteger(0, CellName, OBJPROP_COLOR, ColorText);
     ObjectSetInteger(0, CellName, OBJPROP_BGCOLOR, Color);
     ObjectSetInteger(0, CellName, OBJPROP_BORDER_COLOR, clrBlack);
-
 }
 
 
@@ -1014,6 +1173,7 @@ void DrawMatrix()
     ObjectSetInteger(0, MatrixBase, OBJPROP_XSIZE, (CellX + 1) * col + 3);
     ObjectSetInteger(0, MatrixBase, OBJPROP_YSIZE, MatrixY);
     MatrixOpen = true;
+    ChartRedraw();
 }
 
 void RemoveMatrix()
@@ -1220,5 +1380,205 @@ void NotifyPossibleTrade()
         if (!SendNotification(AppText)) Print("Error sending notification " + IntegerToString(GetLastError()));
     }
     LastAlertDirection = IdealAction;
+}
+
+bool GetMAHandle()
+{
+    for (int i = 0; i < ArraySize(AllPairs); i++)
+    {
+        for (int j = 0; j < ArraySize(PeriodIndexes); j++)
+        {
+            if (PeriodEnabled[j])
+            {
+                if (CalculationMode == Mode_MA) MAHandle[i][j] = iMA(AllPairs[i], PeriodIndexes[j], MAPeriod, 0, MAMethod, PRICE_CLOSE);
+                else if (CalculationMode == Mode_RSIMA) MAHandle[i][j] = iMA(AllPairs[i], PeriodIndexes[j], MAPeriod, 0, MAMethod, RSIHandle[i][j]);
+                if (MAHandle[i][j] == INVALID_HANDLE)
+                {
+                    Print("MA handle initialization failed for ", AllPairs[i], " @ ", PeriodIndexes[j], ".");
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool GetRSIHandle()
+{
+    for (int i = 0; i < ArraySize(AllPairs); i++)
+    {
+        for (int j = 0; j < ArraySize(PeriodIndexes); j++)
+        {
+            if (PeriodEnabled[j])
+            {
+                RSIHandle[i][j] = iRSI(AllPairs[i], PeriodIndexes[j], RSIPeriod, PRICE_CLOSE);
+                if (RSIHandle[i][j] == INVALID_HANDLE)
+                {
+                    Print("RSI handle initialization failed for ", AllPairs[i], " @ ", PeriodIndexes[j], ".");
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool GetStochHandle()
+{
+    for (int i = 0; i < ArraySize(AllPairs); i++)
+    {
+        for (int j = 0; j < ArraySize(PeriodIndexes); j++)
+        {
+            if (PeriodEnabled[j])
+            {
+                StochHandle[i][j] = iStochastic(AllPairs[i], PeriodIndexes[j], Stochastic_K_Period, Stochastic_D_Period, Stochastic_Slowing, MAMethod, STO_CLOSECLOSE);
+                if (StochHandle[i][j] == INVALID_HANDLE)
+                {
+                    Print("Stochastic handle initialization failed for ", AllPairs[i], " @ ", PeriodIndexes[j], ".");
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool GetMAValue(int Max)
+{
+    ArrayResize(MAValue, Max);
+    for (int i = 0; i < ArraySize(AllPairs); i++)
+    {
+        for (int j = 0; j < ArraySize(PeriodIndexes); j++)
+        {
+            if (PeriodEnabled[j])
+            {
+                double MAValueTemp[];
+                
+                ArrayResize(MAValueTemp, Max);
+                ArrayInitialize(MAValueTemp, EMPTY_VALUE);
+                ArraySetAsSeries(MAValueTemp, true);
+                
+                int c = CopyBuffer(MAHandle[i][j], 0, 0, Max, MAValueTemp);
+                if (c < 0)
+                {
+                    Print("MA: Error copying ", AllPairs[i], " @ ", PeriodDesc[j], " data - ", GetLastErrorText(GetLastError()), " - ", GetLastError(), " - index: ", i);
+                    return false;
+                }
+                if (c < Max)
+                {
+                    Print("MA: Not enough values for ", AllPairs[i], " @ ", PeriodDesc[j], " data - ", GetLastErrorText(GetLastError()), " - ", GetLastError(), " - index: ", i, " found only ", c);
+                    HistoricalOK = false;
+                    MissingHistoricalPair = AllPairs[i];
+                    return false;
+                }
+                for (int k = 0; k < ArraySize(MAValueTemp); k++)
+                {
+                    if (MAValueTemp[k] == EMPTY_VALUE)
+                    {
+                        Print("MA: Value not valid for for ", AllPairs[i], " @ ", PeriodDesc[j], " value - ", MAValueTemp[k], " - shift ", k, " - index: ", i);
+                        HistoricalOK = false;
+                        MissingHistoricalPair = AllPairs[i];
+                        return false;
+                    }
+                    MAValue[k][i][j] = MAValueTemp[k];
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool GetRSIValue(int Max)
+{
+    ArrayResize(RSIValue, Max);
+    for (int i = 0; i < ArraySize(AllPairs); i++)
+    {
+        for (int j = 0; j < ArraySize(PeriodIndexes); j++)
+        {
+            if (PeriodEnabled[j])
+            {
+                double RSIValueTemp[];
+                
+                ArrayResize(RSIValueTemp, Max);
+                ArrayInitialize(RSIValueTemp, EMPTY_VALUE);
+                ArraySetAsSeries(RSIValueTemp, true);
+                
+                int c = CopyBuffer(RSIHandle[i][j], 0, 0, Max, RSIValueTemp);
+                if (c < 0)
+                {
+                    Print("RSI: Error copying ", AllPairs[i], " @ ", PeriodDesc[j], " data - ", GetLastErrorText(GetLastError()), " - ", GetLastError(), " - index: ", i);
+                    return false;
+                }
+                if (c < Max)
+                {
+                    Print("RSI: Not enough values for ", AllPairs[i], " @ ", PeriodDesc[j], " data - ", GetLastErrorText(GetLastError()), " - ", GetLastError(), " - index: ", i, " found only ", c);
+                    HistoricalOK = false;
+                    MissingHistoricalPair = AllPairs[i];
+                    return false;
+                }
+                for (int k = 0; k < ArraySize(RSIValueTemp); k++)
+                {
+                    if (RSIValueTemp[k] == EMPTY_VALUE)
+                    {
+                        Print("RSI: Value not valid for for ", AllPairs[i], " @ ", PeriodDesc[j], " value - ", RSIValueTemp[k], " - shift ", k, " - index: ", i);
+                        HistoricalOK = false;
+                        MissingHistoricalPair = AllPairs[i];
+                        return false;
+                    }
+                    RSIValue[k][i][j] = RSIValueTemp[k];
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool GetStochValue(int Max)
+{
+    ArrayResize(StochValue, Max);
+    for (int i = 0; i < ArraySize(AllPairs); i++)
+    {
+        for (int j = 0; j < ArraySize(PeriodIndexes); j++)
+        {
+            if (PeriodEnabled[j])
+            {
+                double StochValueTemp[];
+                
+                ArrayResize(StochValueTemp, Max);
+                ArrayInitialize(StochValueTemp, EMPTY_VALUE);
+                ArraySetAsSeries(StochValueTemp, true);
+                
+                int buf_number = 0;
+                if (CalculationMode == Mode_StochMain) buf_number = 0;
+                else if (CalculationMode == Mode_StochSignal) buf_number = 1;
+
+                int c = CopyBuffer(StochHandle[i][j], buf_number, 0, Max, StochValueTemp);
+                if (c < 0)
+                {
+                    Print("Stochastic: Error copying ", AllPairs[i], " @ ", PeriodDesc[j], " data - ", GetLastErrorText(GetLastError()), " - ", GetLastError(), " - index: ", i);
+                    return false;
+                }
+                if (c < Max)
+                {
+                    Print("Stochastic: Not enough values for ", AllPairs[i], " @ ", PeriodDesc[j], " data - ", GetLastErrorText(GetLastError()), " - ", GetLastError(), " - index: ", i, " found only ", c);
+                    HistoricalOK = false;
+                    MissingHistoricalPair = AllPairs[i];
+                    return false;
+                }
+                for (int k = 0; k < ArraySize(StochValueTemp); k++)
+                {
+                    if (StochValueTemp[k] == EMPTY_VALUE)
+                    {
+                        Print("Stochastic: Value not valid for for ", AllPairs[i], " @ ", PeriodDesc[j], " value - ", StochValueTemp[k], " - shift ", k, " - index: ", i);
+                        HistoricalOK = false;
+                        MissingHistoricalPair = AllPairs[i];
+                        return false;
+                    }
+                    StochValue[k][i][j] = StochValueTemp[k];
+                }
+            }
+        }
+    }
+    return true;
 }
 //+------------------------------------------------------------------+
